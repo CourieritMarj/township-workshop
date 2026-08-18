@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0A0A0C">
+<title>Have your say — CourierIT</title>
+<style>
+  :root{--yellow:#E9E514;--yellow2:#F2EE3A;--red:#DD181F;--red2:#FF3B42;--green:#2ED67A;
+        --line:rgba(255,255,255,.13);--line2:rgba(255,255,255,.22);--grey:#9EA0AC}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{background:#08080A;color:#EDEDF3;font:400 17px/1.55 -apple-system,"Segoe UI",Roboto,system-ui,sans-serif;
+    padding:0 0 calc(40px + env(safe-area-inset-bottom));min-height:100vh}
+  .bar{position:sticky;top:0;z-index:10;background:rgba(8,8,10,.94);backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line);padding:14px 20px calc(14px) ;
+    padding-top:calc(14px + env(safe-area-inset-top));display:flex;align-items:center;gap:12px}
+  .bar .lg{font-size:15px;font-weight:800;letter-spacing:.02em;color:var(--yellow)}
+  .bar .lg span{color:#fff}
+  .bar .room{margin-left:auto;font-size:12px;font-weight:750;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--grey);display:flex;align-items:center;gap:7px}
+  .bar .room b{color:#fff;letter-spacing:.06em}
+  .live{width:8px;height:8px;border-radius:50%;background:#5A5A66}
+  .live.on{background:var(--green);box-shadow:0 0 0 3px rgba(46,214,122,.2)}
+  main{padding:24px 20px 0;max-width:640px;margin:0 auto}
+  h1{font-size:30px;font-weight:750;letter-spacing:-.02em;line-height:1.15;margin-bottom:8px}
+  .lede{color:var(--grey);font-size:16px;margin-bottom:24px}
+
+  .card{border:1px solid var(--line);border-radius:18px;background:rgba(18,18,23,.9);
+    padding:22px 20px;margin-bottom:16px}
+  .card h2{font-size:20px;font-weight:750;line-height:1.25;margin-bottom:4px}
+  .card .sub{font-size:14.5px;color:var(--grey);margin-bottom:16px}
+  .tag{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--yellow);margin-bottom:9px}
+
+  .opt{display:flex;align-items:center;gap:13px;width:100%;text-align:left;
+    padding:16px 17px;margin-bottom:9px;border-radius:14px;border:1px solid var(--line2);
+    background:rgba(255,255,255,.045);color:#EDEDF3;font:inherit;font-size:16.5px;font-weight:650;
+    cursor:pointer;transition:.16s;line-height:1.32}
+  .opt:active{transform:scale(.985)}
+  .opt .k{width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,.1);flex:none;
+    display:grid;place-items:center;font-size:13px;font-weight:800;color:var(--grey)}
+  .opt.on{border-color:var(--yellow);background:rgba(233,229,20,.13)}
+  .opt.on .k{background:var(--yellow);color:#111}
+  .opt.done{opacity:.5;pointer-events:none}
+
+  textarea,input[type=text]{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--line2);
+    border-radius:13px;padding:14px 15px;color:#fff;font:inherit;font-size:16.5px;outline:none;
+    transition:.18s;-webkit-appearance:none}
+  textarea{min-height:104px;resize:vertical;line-height:1.5}
+  textarea:focus,input:focus{border-color:var(--yellow);background:rgba(255,255,255,.1)}
+  ::placeholder{color:#61616C}
+  label.f{display:block;font-size:15.5px;font-weight:700;margin:16px 0 8px;color:#DEDEE6}
+  label.f:first-of-type{margin-top:0}
+
+  .btn{width:100%;border:none;border-radius:14px;padding:16px;font:inherit;font-size:17px;font-weight:750;
+    background:var(--yellow);color:#111;cursor:pointer;margin-top:14px;transition:.16s}
+  .btn:active{transform:scale(.99)}
+  .btn[disabled]{opacity:.45;pointer-events:none}
+  .btn.ghost{background:rgba(255,255,255,.08);color:#DEDEE6;border:1px solid var(--line2)}
+
+  .ok{display:none;align-items:center;gap:11px;margin-top:14px;padding:14px 16px;border-radius:13px;
+    background:rgba(46,214,122,.12);border:1px solid rgba(46,214,122,.4);color:#8FEFBB;
+    font-size:15.5px;font-weight:650}
+  .ok.show{display:flex}
+  .ok .tick{width:24px;height:24px;border-radius:50%;background:var(--green);color:#06240f;flex:none;
+    display:grid;place-items:center;font-weight:800;font-size:14px}
+
+  .note{font-size:13.5px;color:#6E6E7A;margin-top:10px;line-height:1.5}
+  .foot{text-align:center;color:#55555F;font-size:13px;padding:26px 20px 0}
+  .err{margin:20px;padding:18px 20px;border-radius:14px;border:1px solid rgba(221,24,31,.5);
+    background:rgba(221,24,31,.1);color:#FFB3B6;font-size:15.5px;display:none}
+  .err.show{display:block}
+  #join{max-width:420px;margin:0 auto;padding:40px 20px}
+  #join h1{margin-bottom:6px}
+  #join input{text-align:center;font-size:30px;font-weight:800;letter-spacing:.32em;
+    text-transform:uppercase;padding:18px 12px}
+  .hide{display:none!important}
+</style></head><body>
+
+<div class="bar">
+  <div class="lg">Courier<span>IT</span></div>
+  <div class="room"><span class="live" id="live"></span>Room <b id="roomTag">—</b></div>
+</div>
+
+<div class="err" id="err"></div>
+
+<!-- if no room code came in on the link -->
+<section id="join">
+  <h1>Enter the room code</h1>
+  <p class="lede">It's on the screen at the front, next to the QR code.</p>
+  <input type="text" id="joinCode" maxlength="6" autocomplete="off" autocapitalize="characters"
+         spellcheck="false" placeholder="ABCD" inputmode="text">
+  <button class="btn" id="joinGo">Join</button>
+</section>
+
+<main id="app" class="hide">
+  <h1 id="hello">Have your say</h1>
+  <p class="lede" id="helloSub">Your answers appear on the screen at the front. No names needed unless you want to add one.</p>
+
+  <!-- POLL: what customers complain about -->
+  <section class="card" data-panel="poll-channel">
+    <div class="tag">Show of hands</div>
+    <h2>Which do you get the most complaints about?</h2>
+    <div class="sub">Pick the one that costs you most.</div>
+    <div data-opts="channel"></div>
+    <div class="ok" id="ok-channel"><span class="tick">✓</span><span>Counted — thank you.</span></div>
+  </section>
+
+  <!-- POLL: biggest cost driver -->
+  <section class="card" data-panel="poll-challenge">
+    <div class="tag">Show of hands</div>
+    <h2>Which one costs your business the most?</h2>
+    <div class="sub">One vote each.</div>
+    <div data-opts="challenge"></div>
+    <div class="ok" id="ok-challenge"><span class="tick">✓</span><span>Counted — thank you.</span></div>
+  </section>
+
+  <!-- EXERCISE -->
+  <section class="card" data-panel="exercise">
+    <div class="tag">Group exercise</div>
+    <h2>“Deliver the Parcel”</h2>
+    <div class="sub">One order. One school name. One cellphone number. No address.
+      Work through it in your group, then send your answers.</div>
+    <label class="f" for="q1">1 · How would you solve the delivery challenge?</label>
+    <textarea id="q1" placeholder="Your group's answer…"></textarea>
+    <label class="f" for="q2">2 · What end-user communication is required?</label>
+    <textarea id="q2" placeholder="Your group's answer…"></textarea>
+    <label class="f" for="q3">3 · What risks exist?</label>
+    <textarea id="q3" placeholder="Your group's answer…"></textarea>
+    <label class="f" for="q4">4 · How would you reduce the risk of a failed delivery?</label>
+    <textarea id="q4" placeholder="Your group's answer…"></textarea>
+    <input type="text" id="exWho" placeholder="Your name or company (optional)" style="margin-top:16px">
+    <button class="btn" id="exSend">Send our answers</button>
+    <div class="ok" id="ok-ex"><span class="tick">✓</span><span>Sent — they're on the screen now.</span></div>
+    <p class="note">You can send more than once — just add to what you wrote.</p>
+  </section>
+
+  <!-- Q&A -->
+  <section class="card" data-panel="qa">
+    <div class="tag">Questions</div>
+    <h2>Ask a question</h2>
+    <div class="sub">Anything you want covered before the end.</div>
+    <textarea id="qaTxt" placeholder="Your question or comment…"></textarea>
+    <input type="text" id="qaWho" placeholder="Your name or company (optional)" style="margin-top:12px">
+    <button class="btn" id="qaSend">Put it on the board</button>
+    <div class="ok" id="ok-qa"><span class="tick">✓</span><span>On the board — thank you.</span></div>
+  </section>
+
+  <p class="foot">CourierIT &middot; Cracking the Township Delivery Code</p>
+</main>
+
+<script type="module">
+const CFG = {
+  apiKey: "AIzaSyCY8h2aHQ9eTTCwdtnwnj75zwotaxEQ7TQ",
+  authDomain: "cit-ecom-presentation.firebaseapp.com",
+  databaseURL: "https://cit-ecom-presentation-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "cit-ecom-presentation",
+  storageBucket: "cit-ecom-presentation.firebasestorage.app",
+  messagingSenderId: "449791630127",
+  appId: "1:449791630127:web:db5a6eba8eff14545c5fda"
+};
+const V = '12.17.1';
+
+/* the two polls, worded exactly as they appear on the screen */
+const POLLS = {
+  channel: ['No communication','Late or missed delivery windows','Driver could not find the address',
+            'Customer feels unsafe receiving','Parcel lost, stolen or damaged'],
+  challenge: ['Address complexity','Communication gaps','Security & risk',
+              'Failed deliveries','Cost to serve']
+};
+const LABEL = {
+  channel: {'No communication':'No communication — never told what is happening',
+            'Late or missed delivery windows':'Late deliveries — not when it was promised',
+            'Driver could not find the address':'The address could not be found',
+            'Customer feels unsafe receiving':'Safety at handover',
+            'Parcel lost, stolen or damaged':'Lost, stolen or damaged'},
+  challenge:{'Address complexity':'Address complexity','Communication gaps':'Communication gaps',
+             'Security & risk':'Security & risk','Failed deliveries':'Failed deliveries & reattempts',
+             'Cost to serve':'Cost-to-serve pressure'}
+};
+
+const $ = s => document.querySelector(s);
+const err = m => { const e=$('#err'); e.textContent=m; e.classList.add('show'); };
+
+/* room code: from ?r= on the link, or typed in */
+const params = new URLSearchParams(location.search);
+let ROOM = (params.get('r') || localStorage.getItem('cit_room') || '').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
+
+let db, dbref, push, set_, serverTimestamp, onValue;
+
+async function boot(){
+  try{
+    const A = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-app.js`);
+    const D = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-database.js`);
+    const app = A.initializeApp(CFG);
+    db = D.getDatabase(app);
+    dbref = D.ref; push = D.push; set_ = D.set; serverTimestamp = D.serverTimestamp; onValue = D.onValue;
+    onValue(dbref(db,'.info/connected'), s => $('#live').classList.toggle('on', s.val()===true));
+  }catch(e){
+    err('Could not connect. Check your data or wifi, then pull down to refresh.');
+    throw e;
+  }
+}
+
+function showApp(){
+  localStorage.setItem('cit_room', ROOM);
+  $('#roomTag').textContent = ROOM;
+  $('#join').classList.add('hide');
+  $('#app').classList.remove('hide');
+  buildPolls();
+}
+
+function buildPolls(){
+  Object.keys(POLLS).forEach(k=>{
+    const wrap = document.querySelector(`[data-opts="${k}"]`);
+    wrap.innerHTML = POLLS[k].map((o,i)=>
+      `<button class="opt" data-poll="${k}" data-opt="${o.replace(/"/g,'&quot;')}">
+         <span class="k">${i+1}</span><span>${LABEL[k][o]||o}</span></button>`).join('');
+  });
+  document.querySelectorAll('.opt').forEach(b=>{
+    b.onclick = async () => {
+      const k=b.dataset.poll, opt=b.dataset.opt;
+      const already = localStorage.getItem('cit_voted_'+ROOM+'_'+k);
+      document.querySelectorAll(`[data-poll="${k}"]`).forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      try{
+        const key = already || push(dbref(db,`sessions/${ROOM}/poll/${k}`)).key;
+        await set_(dbref(db,`sessions/${ROOM}/poll/${k}/${key}`), { opt, at: Date.now() });
+        localStorage.setItem('cit_voted_'+ROOM+'_'+k, key);   // change your mind, don't double-count
+        $('#ok-'+k).classList.add('show');
+      }catch(e){ err('That vote did not go through — try again.'); }
+    };
+  });
+}
+
+async function sendExercise(){
+  const qs=['q1','q2','q3','q4'], who=$('#exWho').value.trim().slice(0,80);
+  const any = qs.some(q=>$('#'+q).value.trim());
+  if(!any){ err('Type an answer to at least one question first.'); return; }
+  $('#exSend').disabled=true;
+  try{
+    for(const q of qs){
+      const t=$('#'+q).value.trim(); if(!t) continue;
+      const key = localStorage.getItem(`cit_ex_${ROOM}_${q}`) || push(dbref(db,`sessions/${ROOM}/exercise/${q}`)).key;
+      localStorage.setItem(`cit_ex_${ROOM}_${q}`, key);
+      await set_(dbref(db,`sessions/${ROOM}/exercise/${q}/${key}`),
+                 { text:t.slice(0,1200), who, at:Date.now() });
+    }
+    $('#ok-ex').classList.add('show');
+  }catch(e){ err('Those answers did not send — try again.'); }
+  $('#exSend').disabled=false;
+}
+
+async function sendQA(){
+  const t=$('#qaTxt').value.trim(); if(!t){ err('Type your question first.'); return; }
+  $('#qaSend').disabled=true;
+  try{
+    await push(dbref(db,`sessions/${ROOM}/qa`),
+               { text:t.slice(0,600), who:$('#qaWho').value.trim().slice(0,80), at:Date.now(), done:false });
+    $('#qaTxt').value='';
+    $('#ok-qa').classList.add('show');
+    setTimeout(()=>$('#ok-qa').classList.remove('show'), 4000);
+  }catch(e){ err('That did not send — try again.'); }
+  $('#qaSend').disabled=false;
+}
+
+await boot();
+$('#joinGo').onclick = () => {
+  const v=$('#joinCode').value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
+  if(v.length<3){ err('That code looks too short.'); return; }
+  ROOM=v; $('#err').classList.remove('show'); showApp();
+};
+$('#joinCode').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#joinGo').click(); });
+$('#exSend').onclick=sendExercise;
+$('#qaSend').onclick=sendQA;
+if(ROOM.length>=3) showApp();
+</script>
+</body></html>
