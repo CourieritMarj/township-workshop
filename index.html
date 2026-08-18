@@ -97,7 +97,7 @@
   <p class="lede" id="helloSub">Your answers appear on the screen at the front. No names needed unless you want to add one.</p>
 
   <!-- POLL: what customers complain about -->
-  <section class="card" data-panel="poll-channel">
+  <section class="card" data-sec="complaints">
     <div class="tag">Show of hands</div>
     <h2>Which do you get the most complaints about?</h2>
     <div class="sub">Pick the one that costs you most.</div>
@@ -106,7 +106,7 @@
   </section>
 
   <!-- POLL: biggest cost driver -->
-  <section class="card" data-panel="poll-challenge">
+  <section class="card" data-sec="cost">
     <div class="tag">Show of hands</div>
     <h2>Which one costs your business the most?</h2>
     <div class="sub">One vote each.</div>
@@ -115,7 +115,7 @@
   </section>
 
   <!-- EXERCISE -->
-  <section class="card" data-panel="exercise">
+  <section class="card" data-sec="exercise">
     <div class="tag">Group exercise</div>
     <h2>“Deliver the Parcel”</h2>
     <div class="sub">One order. One school name. One cellphone number. No address.
@@ -135,7 +135,7 @@
   </section>
 
   <!-- Q&A -->
-  <section class="card" data-panel="qa">
+  <section class="card" data-sec="qa">
     <div class="tag">Questions</div>
     <h2>Ask a question</h2>
     <div class="sub">Anything you want covered before the end.</div>
@@ -184,6 +184,14 @@ const err = m => { const e=$('#err'); e.textContent=m; e.classList.add('show'); 
 /* room code: from ?r= on the link, or typed in */
 const params = new URLSearchParams(location.search);
 let ROOM = (params.get('r') || localStorage.getItem('cit_room') || '').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
+/* each QR carries its own section, so a phone only ever shows the one question being asked */
+const SEC = (params.get('s') || '').toLowerCase();
+const HEADINGS = {
+  complaints: ['What do your customers complain about?', 'Pick one. It goes straight onto the screen at the front.'],
+  cost:       ['Which one costs you the most?',          'Pick one. It goes straight onto the screen at the front.'],
+  exercise:   ['Deliver the Parcel',                      'Work through it in your group, then send your answers up to the screen.'],
+  qa:         ['Ask a question',                          'It goes onto the board at the front. Add your name only if you want to.']
+};
 
 let db, dbref, push, set_, serverTimestamp, onValue;
 
@@ -206,12 +214,27 @@ function showApp(){
   $('#roomTag').textContent = ROOM;
   $('#join').classList.add('hide');
   $('#app').classList.remove('hide');
+  if(SEC && HEADINGS[SEC]){
+    document.querySelectorAll('[data-sec]').forEach(el=>{
+      if(el.dataset.sec !== SEC) el.remove();
+    });
+    $('#hello').textContent    = HEADINGS[SEC][0];
+    $('#helloSub').textContent = HEADINGS[SEC][1];
+    const only = document.querySelector('[data-sec]');
+    if(only){                       // the page title already says it — no need twice
+      const h=only.querySelector('h2'), sub=only.querySelector('.sub'), tag=only.querySelector('.tag');
+      if(h) h.remove(); if(tag) tag.remove();
+      if(sub && (SEC==='complaints'||SEC==='cost')) sub.remove();
+      only.style.marginTop='4px';
+    }
+  }
   buildPolls();
 }
 
 function buildPolls(){
   Object.keys(POLLS).forEach(k=>{
     const wrap = document.querySelector(`[data-opts="${k}"]`);
+    if(!wrap) return;                      // that poll isn't on this scanned page
     wrap.innerHTML = POLLS[k].map((o,i)=>
       `<button class="opt" data-poll="${k}" data-opt="${o.replace(/"/g,'&quot;')}">
          <span class="k">${i+1}</span><span>${LABEL[k][o]||o}</span></button>`).join('');
