@@ -11,7 +11,7 @@
   body{background:#08080A;color:#EDEDF3;font:400 17px/1.55 -apple-system,"Segoe UI",Roboto,system-ui,sans-serif;
     padding:0 0 calc(40px + env(safe-area-inset-bottom));min-height:100vh}
   .bar{position:sticky;top:0;z-index:10;background:rgba(8,8,10,.94);backdrop-filter:blur(14px);
-    border-bottom:1px solid var(--line);padding:14px 20px calc(14px) ;
+    border-bottom:1px solid var(--line);padding:14px 20px;
     padding-top:calc(14px + env(safe-area-inset-top));display:flex;align-items:center;gap:12px}
   .bar .lg{font-size:15px;font-weight:800;letter-spacing:.02em;color:var(--yellow)}
   .bar .lg span{color:#fff}
@@ -20,9 +20,34 @@
   .bar .room b{color:#fff;letter-spacing:.06em}
   .live{width:8px;height:8px;border-radius:50%;background:#5A5A66}
   .live.on{background:var(--green);box-shadow:0 0 0 3px rgba(46,214,122,.2)}
+  #back{display:none;align-items:center;gap:7px;background:rgba(255,255,255,.08);
+    border:1px solid var(--line2);color:#DEDEE6;font:inherit;font-size:14px;font-weight:700;
+    padding:8px 14px 8px 11px;border-radius:11px;cursor:pointer}
+  #back:active{transform:scale(.97)}
+  body.inside #back{display:flex}
   main{padding:24px 20px 0;max-width:640px;margin:0 auto}
   h1{font-size:30px;font-weight:750;letter-spacing:-.02em;line-height:1.15;margin-bottom:8px}
   .lede{color:var(--grey);font-size:16px;margin-bottom:24px}
+
+  /* ---------- the menu ---------- */
+  .mi{display:block;width:100%;text-align:left;border:1px solid var(--line2);border-radius:18px;
+    background:rgba(18,18,23,.9);padding:19px 19px 18px;margin-bottom:14px;color:#EDEDF3;font:inherit;
+    cursor:pointer;transition:.16s;position:relative}
+  .mi:active{transform:scale(.99)}
+  .mi .n{font-size:11.5px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--yellow);
+    display:block;margin-bottom:6px}
+  .mi.fb .n{color:var(--red2)}
+  .mi h2{font-size:19.5px;font-weight:750;line-height:1.26;margin-bottom:4px}
+  .mi p{font-size:14.5px;color:var(--grey);line-height:1.45}
+  .mi .go{position:absolute;right:17px;top:50%;transform:translateY(-50%);font-size:22px;color:#4E4E5A}
+  .mi h2,.mi p{padding-right:26px}
+  .mi.done{border-color:rgba(46,214,122,.45);background:rgba(46,214,122,.07)}
+  .mi .did{display:none;margin-top:11px;font-size:13px;font-weight:750;color:#8FEFBB;
+    align-items:center;gap:7px}
+  .mi.done .did{display:flex}
+  .mi .did i{width:17px;height:17px;border-radius:50%;background:var(--green);color:#06240f;
+    display:grid;place-items:center;font-size:11px;font-style:normal;font-weight:800}
+  .waitnote{margin:22px 2px 0;font-size:14px;color:#6E6E7A;line-height:1.55}
 
   .card{border:1px solid var(--line);border-radius:18px;background:rgba(18,18,23,.9);
     padding:22px 20px;margin-bottom:16px}
@@ -78,6 +103,7 @@
 
 <div class="bar">
   <div class="lg">Courier<span>IT</span></div>
+  <button id="back">‹ Menu</button>
   <div class="room"><span class="live" id="live"></span>Room <b id="roomTag">—</b></div>
 </div>
 
@@ -93,57 +119,92 @@
 </section>
 
 <main id="app" class="hide">
-  <h1 id="hello">Have your say</h1>
-  <p class="lede" id="helloSub">Your answers appear on the screen at the front. No names needed unless you want to add one.</p>
 
-  <!-- POLL: what customers complain about -->
-  <section class="card" data-sec="complaints">
-    <div class="tag">Show of hands</div>
-    <h2>Which do you get the most complaints about?</h2>
-    <div class="sub">Pick the one that costs you most.</div>
-    <div data-opts="channel"></div>
-    <div class="ok" id="ok-channel"><span class="tick">✓</span><span>Counted — thank you.</span></div>
-  </section>
+  <!-- ---------- MENU ---------- -->
+  <div id="menu">
+    <h1>You're in</h1>
+    <p class="lede">Keep this page open for the whole session. The presenter will tell you which one to tap.</p>
 
-  <!-- POLL: biggest cost driver -->
-  <section class="card" data-sec="cost">
-    <div class="tag">Show of hands</div>
-    <h2>Which one costs your business the most?</h2>
-    <div class="sub">One vote each.</div>
-    <div data-opts="challenge"></div>
-    <div class="ok" id="ok-challenge"><span class="tick">✓</span><span>Counted — thank you.</span></div>
-  </section>
+    <button class="mi" data-go="cost">
+      <span class="n">Challenge 1</span>
+      <h2>What costs your business the most?</h2>
+      <p>One tap. Your vote lands on the screen at the front.</p>
+      <span class="go">›</span>
+      <span class="did"><i>✓</i>You've answered this one</span>
+    </button>
 
-  <!-- EXERCISE -->
-  <section class="card" data-sec="exercise">
-    <div class="tag">Group exercise</div>
-    <h2>“Deliver the Parcel”</h2>
-    <div class="sub">One order. One school name. One cellphone number. No address.
-      Work through it in your group, then send your answers.</div>
-    <label class="f" for="q1">1 · How would you solve the delivery challenge?</label>
-    <textarea id="q1" placeholder="Your group's answer…"></textarea>
-    <label class="f" for="q2">2 · What end-user communication is required?</label>
-    <textarea id="q2" placeholder="Your group's answer…"></textarea>
-    <label class="f" for="q3">3 · What risks exist?</label>
-    <textarea id="q3" placeholder="Your group's answer…"></textarea>
-    <label class="f" for="q4">4 · How would you reduce the risk of a failed delivery?</label>
-    <textarea id="q4" placeholder="Your group's answer…"></textarea>
-    <input type="text" id="exWho" placeholder="Your name or company (optional)" style="margin-top:16px">
-    <button class="btn" id="exSend">Send our answers</button>
-    <div class="ok" id="ok-ex"><span class="tick">✓</span><span>Sent — they're on the screen now.</span></div>
-    <p class="note">You can send more than once — just add to what you wrote.</p>
-  </section>
+    <button class="mi" data-go="exercise">
+      <span class="n">Challenge 2</span>
+      <h2>Deliver the Parcel</h2>
+      <p>The group scenario — four questions to work through together.</p>
+      <span class="go">›</span>
+      <span class="did"><i>✓</i>You've sent your answers</span>
+    </button>
 
-  <!-- Q&A -->
-  <section class="card" data-sec="qa">
-    <div class="tag">Questions</div>
-    <h2>Ask a question</h2>
-    <div class="sub">Anything you want covered before the end.</div>
-    <textarea id="qaTxt" placeholder="Your question or comment…"></textarea>
-    <input type="text" id="qaWho" placeholder="Your name or company (optional)" style="margin-top:12px">
-    <button class="btn" id="qaSend">Put it on the board</button>
-    <div class="ok" id="ok-qa"><span class="tick">✓</span><span>On the board — thank you.</span></div>
-  </section>
+    <button class="mi" data-go="complaints">
+      <span class="n">Challenge 3</span>
+      <h2>What do your customers complain about?</h2>
+      <p>One tap for the complaint that costs you most.</p>
+      <span class="go">›</span>
+      <span class="did"><i>✓</i>You've answered this one</span>
+    </button>
+
+    <button class="mi fb" data-go="qa">
+      <span class="n">Feedback session</span>
+      <h2>Questions &amp; reflections</h2>
+      <p>Anything you want covered before the end. Add as many as you like.</p>
+      <span class="go">›</span>
+      <span class="did"><i>✓</i>You've added to the board</span>
+    </button>
+
+    <p class="waitnote">Nothing to do yet? That's fine — leave this open and wait for the prompt.</p>
+  </div>
+
+  <!-- ---------- SECTIONS ---------- -->
+  <div id="sections">
+    <h1 id="hello"></h1>
+    <p class="lede" id="helloSub"></p>
+
+    <!-- POLL: biggest cost driver — Challenge 1 -->
+    <section class="card hide" data-sec="cost">
+      <div data-opts="challenge"></div>
+      <div class="ok" id="ok-challenge"><span class="tick">✓</span><span>Counted — thank you.</span></div>
+      <p class="note">Changed your mind? Tap a different one — it replaces your vote, it doesn't add a second.</p>
+    </section>
+
+    <!-- EXERCISE — Challenge 2 -->
+    <section class="card hide" data-sec="exercise">
+      <label class="f" for="q1">1 · How would you solve the delivery challenge?</label>
+      <textarea id="q1" placeholder="Your group's answer…"></textarea>
+      <label class="f" for="q2">2 · What end-user communication is required?</label>
+      <textarea id="q2" placeholder="Your group's answer…"></textarea>
+      <label class="f" for="q3">3 · What risks exist?</label>
+      <textarea id="q3" placeholder="Your group's answer…"></textarea>
+      <label class="f" for="q4">4 · How would you reduce the risk of a failed delivery?</label>
+      <textarea id="q4" placeholder="Your group's answer…"></textarea>
+      <input type="text" id="exWho" placeholder="Your name or company (optional)" style="margin-top:16px">
+      <button class="btn" id="exSend">Send our answers</button>
+      <div class="ok" id="ok-ex"><span class="tick">✓</span><span>Sent — they're on the screen now.</span></div>
+      <p class="note">You can send more than once — just add to what you wrote.</p>
+    </section>
+
+    <!-- POLL: what customers complain about — Challenge 3 -->
+    <section class="card hide" data-sec="complaints">
+      <div data-opts="channel"></div>
+      <div class="ok" id="ok-channel"><span class="tick">✓</span><span>Counted — thank you.</span></div>
+      <p class="note">Changed your mind? Tap a different one — it replaces your vote, it doesn't add a second.</p>
+    </section>
+
+    <!-- Q&A — Feedback session -->
+    <section class="card hide" data-sec="qa">
+      <textarea id="qaTxt" placeholder="Your question or comment…"></textarea>
+      <input type="text" id="qaWho" placeholder="Your name or company (optional)" style="margin-top:12px">
+      <button class="btn" id="qaSend">Put it on the board</button>
+      <div class="ok" id="ok-qa"><span class="tick">✓</span><span>On the board — thank you.</span></div>
+    </section>
+
+    <button class="btn ghost" id="back2">‹ Back to the menu</button>
+  </div>
 
   <p class="foot">CourierIT &middot; Cracking the Township Delivery Code</p>
 </main>
@@ -178,22 +239,23 @@ const LABEL = {
              'Cost to serve':'Cost-to-serve pressure'}
 };
 
-const $ = s => document.querySelector(s);
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
 const err = m => { const e=$('#err'); e.textContent=m; e.classList.add('show'); };
 
 /* room code: from ?r= on the link, or typed in */
 const params = new URLSearchParams(location.search);
 let ROOM = (params.get('r') || localStorage.getItem('cit_room') || '').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
-/* each QR carries its own section, so a phone only ever shows the one question being asked */
-const SEC = (params.get('s') || '').toLowerCase();
+
+const SECTIONS = ['cost','exercise','complaints','qa'];
 const HEADINGS = {
-  complaints: ['What do your customers complain about?', 'Pick one. It goes straight onto the screen at the front.'],
-  cost:       ['Which one costs you the most?',          'Pick one. It goes straight onto the screen at the front.'],
-  exercise:   ['Deliver the Parcel',                      'Work through it in your group, then send your answers up to the screen.'],
-  qa:         ['Ask a question',                          'It goes onto the board at the front. Add your name only if you want to.']
+  cost:       ['Challenge 1', 'Which one costs your business the most?', 'Pick one. It goes straight onto the screen at the front.'],
+  exercise:   ['Challenge 2', 'Deliver the Parcel', 'One order. One school name. One cellphone number. No address. Work it through in your group, then send your answers up.'],
+  complaints: ['Challenge 3', 'What do your customers complain about?', 'Pick the one that costs you most. It goes straight onto the screen.'],
+  qa:         ['Feedback session', 'Ask a question', 'It goes onto the board at the front. Add your name only if you want to.']
 };
 
-let db, dbref, push, set_, serverTimestamp, onValue;
+let db, dbref, push, set_, onValue;
 
 async function boot(){
   try{
@@ -201,7 +263,7 @@ async function boot(){
     const D = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-database.js`);
     const app = A.initializeApp(CFG);
     db = D.getDatabase(app);
-    dbref = D.ref; push = D.push; set_ = D.set; serverTimestamp = D.serverTimestamp; onValue = D.onValue;
+    dbref = D.ref; push = D.push; set_ = D.set; onValue = D.onValue;
     onValue(dbref(db,'.info/connected'), s => $('#live').classList.toggle('on', s.val()===true));
   }catch(e){
     err('Could not connect. Check your data or wifi, then pull down to refresh.');
@@ -209,49 +271,78 @@ async function boot(){
   }
 }
 
+/* ---------- routing: one page, no reloads, so the phone stays connected ---------- */
+function showMenu(){
+  document.body.classList.remove('inside');
+  $('#menu').classList.remove('hide');
+  $('#sections').classList.add('hide');
+  paintMenu();
+  if(location.hash) history.replaceState(null,'',location.pathname+location.search);
+  window.scrollTo(0,0);
+}
+function showSec(sec){
+  if(!HEADINGS[sec]) return showMenu();
+  document.body.classList.add('inside');
+  $('#menu').classList.add('hide');
+  $('#sections').classList.remove('hide');
+  $$('#sections [data-sec]').forEach(el=>el.classList.toggle('hide', el.dataset.sec!==sec));
+  $('#hello').textContent    = HEADINGS[sec][1];
+  $('#helloSub').textContent = HEADINGS[sec][2];
+  if(location.hash !== '#'+sec) history.pushState(null,'','#'+sec);
+  window.scrollTo(0,0);
+}
+window.addEventListener('popstate', ()=>{
+  const h=(location.hash||'').replace('#','');
+  SECTIONS.includes(h) ? showSec(h) : showMenu();
+});
+
+/* ---------- menu ticks, so nobody wonders whether it went through ---------- */
+function answered(sec){
+  if(sec==='cost')       return !!localStorage.getItem('cit_voted_'+ROOM+'_challenge');
+  if(sec==='complaints') return !!localStorage.getItem('cit_voted_'+ROOM+'_channel');
+  if(sec==='exercise')   return ['q1','q2','q3','q4'].some(q=>localStorage.getItem(`cit_ex_${ROOM}_${q}`));
+  if(sec==='qa')         return !!localStorage.getItem('cit_qa_'+ROOM);
+  return false;
+}
+function paintMenu(){ $$('.mi').forEach(b=>b.classList.toggle('done', answered(b.dataset.go))); }
+
 function showApp(){
   localStorage.setItem('cit_room', ROOM);
   $('#roomTag').textContent = ROOM;
   $('#join').classList.add('hide');
   $('#app').classList.remove('hide');
-  if(SEC && HEADINGS[SEC]){
-    document.querySelectorAll('[data-sec]').forEach(el=>{
-      if(el.dataset.sec !== SEC) el.remove();
-    });
-    $('#hello').textContent    = HEADINGS[SEC][0];
-    $('#helloSub').textContent = HEADINGS[SEC][1];
-    const only = document.querySelector('[data-sec]');
-    if(only){                       // the page title already says it — no need twice
-      const h=only.querySelector('h2'), sub=only.querySelector('.sub'), tag=only.querySelector('.tag');
-      if(h) h.remove(); if(tag) tag.remove();
-      if(sub && (SEC==='complaints'||SEC==='cost')) sub.remove();
-      only.style.marginTop='4px';
-    }
-  }
   buildPolls();
+  /* a deep link (?s=… from an older QR, or a #hash) still opens straight onto that one */
+  const deep = ((params.get('s')||'').toLowerCase()) || (location.hash||'').replace('#','');
+  SECTIONS.includes(deep) ? showSec(deep) : showMenu();
 }
 
 function buildPolls(){
   Object.keys(POLLS).forEach(k=>{
     const wrap = document.querySelector(`[data-opts="${k}"]`);
-    if(!wrap) return;                      // that poll isn't on this scanned page
+    if(!wrap) return;
     wrap.innerHTML = POLLS[k].map((o,i)=>
       `<button class="opt" data-poll="${k}" data-opt="${o.replace(/"/g,'&quot;')}">
          <span class="k">${i+1}</span><span>${LABEL[k][o]||o}</span></button>`).join('');
   });
-  document.querySelectorAll('.opt').forEach(b=>{
+  $$('.opt').forEach(b=>{
     b.onclick = async () => {
       const k=b.dataset.poll, opt=b.dataset.opt;
       const already = localStorage.getItem('cit_voted_'+ROOM+'_'+k);
-      document.querySelectorAll(`[data-poll="${k}"]`).forEach(x=>x.classList.remove('on'));
+      $$(`[data-poll="${k}"]`).forEach(x=>x.classList.remove('on'));
       b.classList.add('on');
       try{
         const key = already || push(dbref(db,`sessions/${ROOM}/poll/${k}`)).key;
         await set_(dbref(db,`sessions/${ROOM}/poll/${k}/${key}`), { opt, at: Date.now() });
         localStorage.setItem('cit_voted_'+ROOM+'_'+k, key);   // change your mind, don't double-count
         $('#ok-'+k).classList.add('show');
+        paintMenu();
       }catch(e){ err('That vote did not go through — try again.'); }
     };
+  });
+  /* if they already voted this session, show it selected when they come back */
+  Object.keys(POLLS).forEach(k=>{
+    if(localStorage.getItem('cit_voted_'+ROOM+'_'+k)) $('#ok-'+k).classList.add('show');
   });
 }
 
@@ -269,6 +360,8 @@ async function sendExercise(){
                  { text:t.slice(0,1200), who, at:Date.now() });
     }
     $('#ok-ex').classList.add('show');
+    $('#err').classList.remove('show');
+    paintMenu();
   }catch(e){ err('Those answers did not send — try again.'); }
   $('#exSend').disabled=false;
 }
@@ -280,13 +373,19 @@ async function sendQA(){
     await push(dbref(db,`sessions/${ROOM}/qa`),
                { text:t.slice(0,600), who:$('#qaWho').value.trim().slice(0,80), at:Date.now(), done:false });
     $('#qaTxt').value='';
+    $('#err').classList.remove('show');
+    localStorage.setItem('cit_qa_'+ROOM,'1');
     $('#ok-qa').classList.add('show');
+    paintMenu();
     setTimeout(()=>$('#ok-qa').classList.remove('show'), 4000);
   }catch(e){ err('That did not send — try again.'); }
   $('#qaSend').disabled=false;
 }
 
 await boot();
+$$('.mi').forEach(b=>b.onclick=()=>showSec(b.dataset.go));
+$('#back').onclick  = showMenu;
+$('#back2').onclick = showMenu;
 $('#joinGo').onclick = () => {
   const v=$('#joinCode').value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
   if(v.length<3){ err('That code looks too short.'); return; }
