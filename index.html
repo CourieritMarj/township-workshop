@@ -48,6 +48,7 @@
   .mi .did i{width:17px;height:17px;border-radius:50%;background:var(--green);color:#06240f;
     display:grid;place-items:center;font-size:11px;font-style:normal;font-weight:800}
   .waitnote{margin:22px 2px 0;font-size:14px;color:#6E6E7A;line-height:1.55}
+  .waitnote a{color:#8B8B98;text-decoration:underline;text-underline-offset:3px}
 
   .card{border:1px solid var(--line);border-radius:18px;background:rgba(18,18,23,.9);
     padding:22px 20px;margin-bottom:16px}
@@ -157,7 +158,8 @@
       <span class="did"><i>✓</i>You've added to the board</span>
     </button>
 
-    <p class="waitnote">Nothing to do yet? That's fine — leave this open and wait for the prompt.</p>
+    <p class="waitnote">Nothing to do yet? That's fine — leave this open and wait for the prompt.
+      <a href="#" id="fresh">Not your answers?</a></p>
   </div>
 
   <!-- ---------- SECTIONS ---------- -->
@@ -255,7 +257,7 @@ const HEADINGS = {
   qa:         ['Feedback session', 'Ask a question', 'It goes onto the board at the front. Add your name only if you want to.']
 };
 
-let db, dbref, push, set_, onValue;
+let db, dbref, push, set_, onValue, get_;
 
 async function boot(){
   try{
@@ -263,7 +265,7 @@ async function boot(){
     const D = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-database.js`);
     const app = A.initializeApp(CFG);
     db = D.getDatabase(app);
-    dbref = D.ref; push = D.push; set_ = D.set; onValue = D.onValue;
+    dbref = D.ref; push = D.push; set_ = D.set; onValue = D.onValue; get_ = D.get;
     onValue(dbref(db,'.info/connected'), s => $('#live').classList.toggle('on', s.val()===true));
   }catch(e){
     err('Could not connect. Check your data or wifi, then pull down to refresh.');
@@ -305,6 +307,33 @@ function answered(sec){
   return false;
 }
 function paintMenu(){ $$('.mi').forEach(b=>b.classList.toggle('done', answered(b.dataset.go))); }
+
+/* Phones remember what they sent so nobody double-votes. But the presenter resets the room
+   between sessions and reuses the same code — so before trusting that memory, check the answers
+   are still up there. If they've been cleared, this is a new session: forget and start clean. */
+const LS_KEYS = () => [
+  'cit_voted_'+ROOM+'_challenge', 'cit_voted_'+ROOM+'_channel', 'cit_qa_'+ROOM,
+  ...['q1','q2','q3','q4'].map(q=>`cit_ex_${ROOM}_${q}`)
+];
+function forgetSession(){ LS_KEYS().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
+
+async function syncTicks(){
+  if(!get_) return;
+  try{
+    const snap = await get_(dbref(db,`sessions/${ROOM}`));
+    const d = snap.val() || {};
+    const stillThere = (branch, key) => !!(branch && key && branch[key]);
+    const drop = (lsKey, present) => { if(localStorage.getItem(lsKey) && !present) localStorage.removeItem(lsKey); };
+
+    drop('cit_voted_'+ROOM+'_challenge',
+         stillThere(d.poll && d.poll.challenge, localStorage.getItem('cit_voted_'+ROOM+'_challenge')));
+    drop('cit_voted_'+ROOM+'_channel',
+         stillThere(d.poll && d.poll.channel,   localStorage.getItem('cit_voted_'+ROOM+'_channel')));
+    ['q1','q2','q3','q4'].forEach(q=>
+      drop(`cit_ex_${ROOM}_${q}`, stillThere(d.exercise && d.exercise[q], localStorage.getItem(`cit_ex_${ROOM}_${q}`))));
+    drop('cit_qa_'+ROOM, stillThere(d.qa, localStorage.getItem('cit_qa_'+ROOM)));
+  }catch(e){ /* offline or read blocked — leave the memory alone rather than wiping it */ }
+}
 
 function showApp(){
   localStorage.setItem('cit_room', ROOM);
@@ -370,11 +399,11 @@ async function sendQA(){
   const t=$('#qaTxt').value.trim(); if(!t){ err('Type your question first.'); return; }
   $('#qaSend').disabled=true;
   try{
-    await push(dbref(db,`sessions/${ROOM}/qa`),
-               { text:t.slice(0,600), who:$('#qaWho').value.trim().slice(0,80), at:Date.now(), done:false });
+    const r = push(dbref(db,`sessions/${ROOM}/qa`));
+    await set_(r, { text:t.slice(0,600), who:$('#qaWho').value.trim().slice(0,80), at:Date.now(), done:false });
     $('#qaTxt').value='';
     $('#err').classList.remove('show');
-    localStorage.setItem('cit_qa_'+ROOM,'1');
+    localStorage.setItem('cit_qa_'+ROOM, r.key || '1');
     $('#ok-qa').classList.add('show');
     paintMenu();
     setTimeout(()=>$('#ok-qa').classList.remove('show'), 4000);
@@ -386,14 +415,22 @@ await boot();
 $$('.mi').forEach(b=>b.onclick=()=>showSec(b.dataset.go));
 $('#back').onclick  = showMenu;
 $('#back2').onclick = showMenu;
-$('#joinGo').onclick = () => {
+$('#fresh').onclick = e => {
+  e.preventDefault();
+  forgetSession();
+  $$('.opt').forEach(o=>o.classList.remove('on'));
+  $$('.ok').forEach(o=>o.classList.remove('show'));
+  ['q1','q2','q3','q4','qaTxt','qaWho','exWho'].forEach(id=>{ const el=$('#'+id); if(el) el.value=''; });
+  paintMenu();
+};
+$('#joinGo').onclick = async () => {
   const v=$('#joinCode').value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
   if(v.length<3){ err('That code looks too short.'); return; }
-  ROOM=v; $('#err').classList.remove('show'); showApp();
+  ROOM=v; $('#err').classList.remove('show'); await syncTicks(); showApp();
 };
 $('#joinCode').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#joinGo').click(); });
 $('#exSend').onclick=sendExercise;
 $('#qaSend').onclick=sendQA;
-if(ROOM.length>=3) showApp();
+if(ROOM.length>=3){ await syncTicks(); showApp(); }
 </script>
 </body></html>
