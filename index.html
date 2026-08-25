@@ -41,12 +41,23 @@
   .mi p{font-size:14.5px;color:var(--grey);line-height:1.45}
   .mi .go{position:absolute;right:17px;top:50%;transform:translateY(-50%);font-size:22px;color:#4E4E5A}
   .mi h2,.mi p{padding-right:26px}
-  .mi.done{border-color:rgba(46,214,122,.45);background:rgba(46,214,122,.07)}
-  .mi .did{display:none;margin-top:11px;font-size:13px;font-weight:750;color:#8FEFBB;
-    align-items:center;gap:7px}
-  .mi.done .did{display:flex}
-  .mi .did i{width:17px;height:17px;border-radius:50%;background:var(--green);color:#06240f;
-    display:grid;place-items:center;font-size:11px;font-style:normal;font-weight:800}
+  .mi .st{display:flex;align-items:center;gap:7px;margin-top:11px;font-size:13px;font-weight:750;
+    color:#7E7E8A}
+  .mi .st i{width:17px;height:17px;border-radius:50%;flex:none;display:grid;place-items:center;
+    font-size:11px;font-style:normal;font-weight:800;background:#2E2E38;color:#8A8A96}
+  /* not released yet */
+  .mi.locked{opacity:.42;pointer-events:none;border-style:dashed}
+  /* open right now */
+  .mi.now{border-color:var(--yellow);background:rgba(233,229,20,.08)}
+  .mi.now .st{color:var(--yellow)}
+  .mi.now .st i{background:var(--yellow);color:#111}
+  /* this person has answered it */
+  .mi.mine .st{color:#8FEFBB}
+  .mi.mine .st i{background:var(--green);color:#06240f}
+  /* the room has finished with it */
+  .mi.finished{border-color:rgba(46,214,122,.5);background:rgba(46,214,122,.09)}
+  .mi.finished .st{color:#8FEFBB}
+  .mi.finished .st i{background:var(--green);color:#06240f}
   .waitnote{margin:22px 2px 0;font-size:14px;color:#6E6E7A;line-height:1.55}
   .waitnote a{color:#8B8B98;text-decoration:underline;text-underline-offset:3px}
 
@@ -99,6 +110,20 @@
   #join h1{margin-bottom:6px}
   #join input{text-align:center;font-size:30px;font-weight:800;letter-spacing:.32em;
     text-transform:uppercase;padding:18px 12px}
+  /* ---------- consent ---------- */
+  #consent{position:fixed;inset:0;z-index:50;background:rgba(6,6,8,.94);backdrop-filter:blur(8px);
+    display:flex;align-items:flex-end;justify-content:center;padding:20px}
+  #consent .box{width:100%;max-width:460px;background:#141419;border:1px solid var(--line2);
+    border-radius:20px;padding:24px 22px calc(22px + env(safe-area-inset-bottom))}
+  #consent h2{font-size:21px;font-weight:750;line-height:1.25;margin-bottom:10px}
+  #consent p{font-size:15.5px;color:#B9B9C4;line-height:1.55;margin-bottom:8px}
+  #consent p b{color:#fff}
+  #consent .btn{margin-top:16px}
+  #consent .decline{display:block;width:100%;margin-top:10px;background:none;border:none;
+    color:#7E7E8A;font:inherit;font-size:14.5px;text-decoration:underline;
+    text-underline-offset:3px;cursor:pointer}
+  #bye{display:none;padding:60px 24px;text-align:center;color:var(--grey)}
+  #bye h1{margin-bottom:10px}
   .hide{display:none!important}
 </style></head><body>
 
@@ -106,6 +131,22 @@
   <div class="lg">Courier<span>IT</span></div>
   <button id="back">‹ Menu</button>
   <div class="room"><span class="live" id="live"></span>Room <b id="roomTag">—</b></div>
+</div>
+
+<div id="consent" class="hide">
+  <div class="box">
+    <h2>Before you start</h2>
+    <p>Your answers go up on the screen at the front, and <b>CourierIT will use them as market
+       research</b> to improve how delivery works in townships.</p>
+    <p>You do not have to give your name — every question can be answered anonymously.</p>
+    <button class="btn" id="agree">I agree — let's go</button>
+    <button class="decline" id="decline">No thanks</button>
+  </div>
+</div>
+
+<div id="bye">
+  <h1>No problem</h1>
+  <p>Close this page and enjoy the session — the presenter will still cover everything.</p>
 </div>
 
 <div class="err" id="err"></div>
@@ -124,14 +165,14 @@
   <!-- ---------- MENU ---------- -->
   <div id="menu">
     <h1>You're in</h1>
-    <p class="lede">Keep this page open for the whole session. The presenter will tell you which one to tap.</p>
+    <p class="lede">Keep this page open for the whole session. Each one opens when the presenter gets to it.</p>
 
     <button class="mi" data-go="cost">
       <span class="n">Challenge 1</span>
-      <h2>What costs your business the most?</h2>
-      <p>One tap. Your vote lands on the screen at the front.</p>
+      <h2>How do your customers prefer to receive parcels?</h2>
+      <p>One tap. Your answer lands on the screen at the front.</p>
       <span class="go">›</span>
-      <span class="did"><i>✓</i>You've answered this one</span>
+      <span class="st"><i></i><b></b></span>
     </button>
 
     <button class="mi" data-go="exercise">
@@ -139,7 +180,7 @@
       <h2>Deliver the Parcel</h2>
       <p>The group scenario — four questions to work through together.</p>
       <span class="go">›</span>
-      <span class="did"><i>✓</i>You've sent your answers</span>
+      <span class="st"><i></i><b></b></span>
     </button>
 
     <button class="mi" data-go="complaints">
@@ -147,7 +188,7 @@
       <h2>What do your customers complain about?</h2>
       <p>One tap for the complaint that costs you most.</p>
       <span class="go">›</span>
-      <span class="did"><i>✓</i>You've answered this one</span>
+      <span class="st"><i></i><b></b></span>
     </button>
 
     <button class="mi fb" data-go="qa">
@@ -155,10 +196,10 @@
       <h2>Questions &amp; reflections</h2>
       <p>Anything you want covered before the end. Add as many as you like.</p>
       <span class="go">›</span>
-      <span class="did"><i>✓</i>You've added to the board</span>
+      <span class="st"><i></i><b></b></span>
     </button>
 
-    <p class="waitnote">Nothing to do yet? That's fine — leave this open and wait for the prompt.
+    <p class="waitnote">Greyed out means it hasn't started yet — just leave this page open.
       <a href="#" id="fresh">Not your answers?</a></p>
   </div>
 
@@ -227,8 +268,8 @@ const V = '12.17.1';
 const POLLS = {
   channel: ['No communication','Late or missed delivery windows','Driver could not find the address',
             'Customer feels unsafe receiving','Parcel lost, stolen or damaged'],
-  challenge: ['Address complexity','Communication gaps','Security & risk',
-              'Failed deliveries','Cost to serve']
+  challenge: ['Delivered to the door','Counter or collection point','At work',
+              'A neighbour or spaza shop','We have never asked']
 };
 const LABEL = {
   channel: {'No communication':'No communication — never told what is happening',
@@ -236,9 +277,10 @@ const LABEL = {
             'Driver could not find the address':'The address could not be found',
             'Customer feels unsafe receiving':'Safety at handover',
             'Parcel lost, stolen or damaged':'Lost, stolen or damaged'},
-  challenge:{'Address complexity':'Address complexity','Communication gaps':'Communication gaps',
-             'Security & risk':'Security & risk','Failed deliveries':'Failed deliveries & reattempts',
-             'Cost to serve':'Cost-to-serve pressure'}
+  challenge:{'Delivered to the door':'Delivered to the door',
+             'Counter or collection point':'Counter or collection point','At work':'At work',
+             'A neighbour or spaza shop':'A neighbour or the local spaza shop',
+             'We have never asked':'We\u2019ve never actually asked them'}
 };
 
 const $  = s => document.querySelector(s);
@@ -251,7 +293,7 @@ let ROOM = (params.get('r') || localStorage.getItem('cit_room') || '').toUpperCa
 
 const SECTIONS = ['cost','exercise','complaints','qa'];
 const HEADINGS = {
-  cost:       ['Challenge 1', 'Which one costs your business the most?', 'Pick one. It goes straight onto the screen at the front.'],
+  cost:       ['Challenge 1', 'How do your township customers prefer to receive parcels?', 'Pick one. It goes straight onto the screen at the front.'],
   exercise:   ['Challenge 2', 'Deliver the Parcel', 'One order. One school name. One cellphone number. No address. Work it through in your group, then send your answers up.'],
   complaints: ['Challenge 3', 'What do your customers complain about?', 'Pick the one that costs you most. It goes straight onto the screen.'],
   qa:         ['Feedback session', 'Ask a question', 'It goes onto the board at the front. Add your name only if you want to.']
@@ -284,6 +326,7 @@ function showMenu(){
 }
 function showSec(sec){
   if(!HEADINGS[sec]) return showMenu();
+  if(gateOf(sec)==='locked') return showMenu();
   document.body.classList.add('inside');
   $('#menu').classList.add('hide');
   $('#sections').classList.remove('hide');
@@ -306,7 +349,38 @@ function answered(sec){
   if(sec==='qa')         return !!localStorage.getItem('cit_qa_'+ROOM);
   return false;
 }
-function paintMenu(){ $$('.mi').forEach(b=>b.classList.toggle('done', answered(b.dataset.go))); }
+/* The presenter opens each activity from the deck. No gate written at all means
+   the deck is older or offline — in that case everything stays open, so a workshop
+   can never be blocked by this. */
+let GATE = null;
+function gateOf(sec){ return (GATE && GATE[sec]) || (GATE ? 'locked' : 'open'); }
+const ST = {
+  locked   : ['',  'Opens when the presenter gets here'],
+  now      : ['\u2192', 'Open now \u2014 tap to answer'],
+  mine     : ['\u2713', 'You have answered this one'],
+  finished : ['\u2713', 'Completed']
+};
+function paintMenu(){
+  $$('.mi').forEach(b=>{
+    const sec = b.dataset.go, g = gateOf(sec), mine = answered(sec);
+    const state = g==='locked' ? 'locked' : g==='done' ? 'finished' : (mine ? 'mine' : 'now');
+    b.classList.toggle('locked',   state==='locked');
+    b.classList.toggle('now',      state==='now');
+    b.classList.toggle('mine',     state==='mine');
+    b.classList.toggle('finished', state==='finished');
+    b.disabled = (state==='locked');
+    const st=b.querySelector('.st');
+    if(st){ st.querySelector('i').textContent = ST[state][0];
+            st.querySelector('b').textContent = ST[state][1]; }
+  });
+}
+function watchGate(){
+  if(!onValue || !dbref || !db) return;
+  onValue(dbref(db,`sessions/${ROOM}/poll/_gate`), s=>{ GATE = s.val(); paintMenu();
+    const h=(location.hash||'').replace('#','');
+    if(h && gateOf(h)==='locked') showMenu();          // pulled back if it closes under them
+  });
+}
 
 /* Phones remember what they sent so nobody double-votes. But the presenter resets the room
    between sessions and reuses the same code — so before trusting that memory, check the answers
@@ -335,12 +409,25 @@ async function syncTicks(){
   }catch(e){ /* offline or read blocked — leave the memory alone rather than wiping it */ }
 }
 
+const CONSENT_KEY = 'cit_consent_v1';
+function needConsent(){ try{ return localStorage.getItem(CONSENT_KEY)!=='yes'; }catch(e){ return true; } }
+function askConsent(after){
+  const box=$('#consent');
+  box.classList.remove('hide');
+  $('#agree').onclick = ()=>{ try{ localStorage.setItem(CONSENT_KEY,'yes'); }catch(e){}
+    box.classList.add('hide'); after(); };
+  $('#decline').onclick = ()=>{ box.classList.add('hide');
+    $('#join').classList.add('hide'); $('#app').classList.add('hide');
+    $('#bye').style.display='block'; };
+}
 function showApp(){
+  if(needConsent()) return askConsent(showApp);
   localStorage.setItem('cit_room', ROOM);
   $('#roomTag').textContent = ROOM;
   $('#join').classList.add('hide');
   $('#app').classList.remove('hide');
   buildPolls();
+  watchGate();
   /* a deep link (?s=… from an older QR, or a #hash) still opens straight onto that one */
   const deep = ((params.get('s')||'').toLowerCase()) || (location.hash||'').replace('#','');
   SECTIONS.includes(deep) ? showSec(deep) : showMenu();
