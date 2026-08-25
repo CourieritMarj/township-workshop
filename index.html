@@ -377,6 +377,13 @@ function paintMenu(){
 function watchGate(){
   if(!onValue || !dbref || !db) return;
   onValue(dbref(db,`sessions/${ROOM}/poll/_gate`), s=>{ GATE = s.val(); paintMenu();
+    /* the presenter reset the room while this page sat open — that is a new audience,
+       so this phone's answers and its agreement both belong to the previous one */
+    const ses = (GATE && GATE._ses) || null;
+    if(ses && SES && ses !== SES){ SES = ses; forgetSession();
+      try{ localStorage.removeItem(CONSENT_KEY()); }catch(e){}
+      location.reload(); return; }
+    if(ses) SES = ses;
     const h=(location.hash||'').replace('#','');
     if(h && gateOf(h)==='locked') showMenu();          // pulled back if it closes under them
   });
@@ -396,6 +403,7 @@ async function syncTicks(){
   try{
     const snap = await get_(dbref(db,`sessions/${ROOM}`));
     const d = snap.val() || {};
+    SES = (d.poll && d.poll._gate && d.poll._gate._ses) || null;   // which audience is in the room
     const stillThere = (branch, key) => !!(branch && key && branch[key]);
     const drop = (lsKey, present) => { if(localStorage.getItem(lsKey) && !present) localStorage.removeItem(lsKey); };
 
@@ -409,12 +417,22 @@ async function syncTicks(){
   }catch(e){ /* offline or read blocked — leave the memory alone rather than wiping it */ }
 }
 
-const CONSENT_KEY = 'cit_consent_v1';
-function needConsent(){ try{ return localStorage.getItem(CONSENT_KEY)!=='yes'; }catch(e){ return true; } }
+/* Consent belongs to one audience, not to the phone forever. The deck stamps a fresh session id
+   every time it locks the room down (first open, and every reset), so a phone that agreed at the
+   09:00 workshop is asked again at 11:00. If we cannot see the stamp (offline), a phone that has
+   already agreed is not nagged, but a phone we know nothing about is still asked. */
+let SES = null;
+const CONSENT_KEY = () => 'cit_consent_' + ROOM;
+function needConsent(){ try{
+    const v = localStorage.getItem(CONSENT_KEY());
+    if(!v) return true;                       // never agreed on this phone, for this room
+    if(SES && v !== SES) return true;         // agreed, but that was a previous audience
+    return false;
+  }catch(e){ return true; } }
 function askConsent(after){
   const box=$('#consent');
   box.classList.remove('hide');
-  $('#agree').onclick = ()=>{ try{ localStorage.setItem(CONSENT_KEY,'yes'); }catch(e){}
+  $('#agree').onclick = ()=>{ try{ localStorage.setItem(CONSENT_KEY(), SES || 'yes'); }catch(e){}
     box.classList.add('hide'); after(); };
   $('#decline').onclick = ()=>{ box.classList.add('hide');
     $('#join').classList.add('hide'); $('#app').classList.add('hide');
