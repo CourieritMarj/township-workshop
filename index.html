@@ -54,8 +54,13 @@
   /* this person has answered it */
   .mi.mine .st{color:#8FEFBB}
   .mi.mine .st i{background:var(--green);color:#06240f}
-  /* the room has finished with it */
-  .mi.finished{border-color:rgba(46,214,122,.5);background:rgba(46,214,122,.09)}
+  /* the room has finished with it — closed off like a locked card so nobody wanders back into
+     the wrong challenge, but the green tick stays so it still reads as done rather than as
+     something they missed */
+  .mi.finished{opacity:.5;pointer-events:none;border-color:rgba(46,214,122,.28);
+    background:rgba(46,214,122,.05)}
+  .mi.finished h2{color:#C9C9D3}
+  .mi.finished .go{display:none}
   .mi.finished .st{color:#8FEFBB}
   .mi.finished .st i{background:var(--green);color:#06240f}
   .waitnote{margin:22px 2px 0;font-size:14px;color:#6E6E7A;line-height:1.55}
@@ -326,7 +331,7 @@ function showMenu(){
 }
 function showSec(sec){
   if(!HEADINGS[sec]) return showMenu();
-  if(gateOf(sec)==='locked') return showMenu();
+  if(shut(sec)) return showMenu();       // locked, or the presenter has closed it again
   document.body.classList.add('inside');
   $('#menu').classList.add('hide');
   $('#sections').classList.remove('hide');
@@ -354,6 +359,8 @@ function answered(sec){
    can never be blocked by this. */
 let GATE = null;
 function gateOf(sec){ return (GATE && GATE[sec]) || (GATE ? 'locked' : 'open'); }
+/* a section nobody may enter: not opened yet, or already finished with */
+function shut(sec){ const g=gateOf(sec); return g==='locked' || g==='done'; }
 const ST = {
   locked   : ['',  'Opens when the presenter gets here'],
   now      : ['\u2192', 'Open now \u2014 tap to answer'],
@@ -368,7 +375,7 @@ function paintMenu(){
     b.classList.toggle('now',      state==='now');
     b.classList.toggle('mine',     state==='mine');
     b.classList.toggle('finished', state==='finished');
-    b.disabled = (state==='locked');
+    b.disabled = (state==='locked' || state==='finished');   // closed means closed, both ways
     const st=b.querySelector('.st');
     if(st){ st.querySelector('i').textContent = ST[state][0];
             st.querySelector('b').textContent = ST[state][1]; }
@@ -385,7 +392,7 @@ function watchGate(){
       location.reload(); return; }
     if(ses) SES = ses;
     const h=(location.hash||'').replace('#','');
-    if(h && gateOf(h)==='locked') showMenu();          // pulled back if it closes under them
+    if(h && shut(h)) showMenu();                      // pulled back if it closes under them
   });
 }
 
