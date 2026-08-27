@@ -194,18 +194,18 @@
       <span class="st"><i></i><b></b></span>
     </button>
 
-    <button class="mi" data-go="cost">
+    <button class="mi" data-go="exercise">
       <span class="n">Challenge 2</span>
-      <h2>How do your customers prefer to receive parcels?</h2>
-      <p>One tap. Your answer lands on the screen at the front.</p>
+      <h2>Deliver the Parcel</h2>
+      <p>The group scenario — four questions to work through together.</p>
       <span class="go">›</span>
       <span class="st"><i></i><b></b></span>
     </button>
 
-    <button class="mi" data-go="exercise">
+    <button class="mi" data-go="cost">
       <span class="n">Challenge 3</span>
-      <h2>Deliver the Parcel</h2>
-      <p>The group scenario — four questions to work through together.</p>
+      <h2>How do your customers prefer to receive parcels?</h2>
+      <p>One tap. Your answer lands on the screen at the front.</p>
       <span class="go">›</span>
       <span class="st"><i></i><b></b></span>
     </button>
@@ -338,10 +338,10 @@ const RATING_Q = [
 const RATE_KEY = () => 'cit_rate_' + ROOM;
 let RATE = {};
 
-const SECTIONS = ['cost','exercise','complaints','rating','qa'];
+const SECTIONS = ['complaints','exercise','cost','rating','qa'];
 const HEADINGS = {
-  cost:       ['Challenge 2', 'How do your township customers prefer to receive parcels?', 'Pick one. It goes straight onto the screen at the front.'],
-  exercise:   ['Challenge 3', 'Deliver the Parcel', 'One order. One school name. One cellphone number. No address. Work it through in your group, then send your answers up.'],
+  cost:       ['Challenge 3', 'How do your township customers prefer to receive parcels?', 'Pick one. It goes straight onto the screen at the front.'],
+  exercise:   ['Challenge 2', 'Deliver the Parcel', 'One order. One school name. One cellphone number. No address. Work it through in your group, then send your answers up.'],
   complaints: ['Challenge 1', 'What do your customers complain about?', 'Pick the one that costs you most. It goes straight onto the screen.'],
   rating:     ['Rate the session', 'Three quick questions', 'Score each one out of five. It is anonymous unless you add your name.'],
   qa:         ['Feedback session', 'Questions, reflections &amp; feedback', 'Anything you want covered, anything you thought of, anything you would change. It goes onto the board at the front — add your name only if you want to.']
@@ -466,7 +466,7 @@ async function syncTicks(){
       drop(`cit_ex_${ROOM}_${q}`, stillThere(d.exercise && d.exercise[q], localStorage.getItem(`cit_ex_${ROOM}_${q}`))));
     drop('cit_qa_'+ROOM, stillThere(d.qa, localStorage.getItem('cit_qa_'+ROOM)));
     (()=>{ let s=null; try{ s=JSON.parse(localStorage.getItem('cit_rate_'+ROOM)||'null'); }catch(e){}
-      if(s && !stillThere(d.rating, s.key)){ localStorage.removeItem('cit_rate_'+ROOM); RATE={}; } })();
+      if(s && !stillThere(d.poll && d.poll._rating, s.key)){ localStorage.removeItem('cit_rate_'+ROOM); RATE={}; } })();
   }catch(e){ /* offline or read blocked — leave the memory alone rather than wiping it */ }
 }
 
@@ -576,13 +576,13 @@ async function sendRating(){
   $('#rateSend').disabled=true;
   try{
     let stored=null; try{ stored=JSON.parse(localStorage.getItem(RATE_KEY())||'null'); }catch(e){}
-    const key = (stored&&stored.key) || push(dbref(db,`sessions/${ROOM}/rating`)).key;
+    const key = (stored&&stored.key) || push(dbref(db,`sessions/${ROOM}/poll/_rating`)).key;
     const note = k => { const t=$(`.rnote[data-rn="${k}"]`); return t ? t.value.trim().slice(0,600) : ''; };
     const notes = { r1:note('r1'), r2:note('r2'), r3:note('r3') };
     const payload = { r1:RATE.r1, r2:RATE.r2, r3:RATE.r3,
                       n1:notes.r1, n2:notes.r2, n3:notes.r3,
                       who:$('#rateWho').value.trim().slice(0,80), at:Date.now() };
-    await set_(dbref(db,`sessions/${ROOM}/rating/${key}`), payload);
+    await set_(dbref(db,`sessions/${ROOM}/poll/_rating/${key}`), payload);
     localStorage.setItem(RATE_KEY(), JSON.stringify({key, v:RATE, n:notes}));  // sending again replaces it
     $('#err').classList.remove('show');
     $('#ok-rating').classList.add('show');
