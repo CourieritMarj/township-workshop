@@ -115,6 +115,20 @@
   #join h1{margin-bottom:6px}
   #join input{text-align:center;font-size:30px;font-weight:800;letter-spacing:.32em;
     text-transform:uppercase;padding:18px 12px}
+
+  /* ---------- rating rows ---------- */
+  .rrow{margin-bottom:20px}
+  .rrow .rq{font-size:16.5px;font-weight:700;line-height:1.35;margin-bottom:10px}
+  .rscale{display:flex;gap:8px}
+  .rscale button{flex:1;aspect-ratio:1/1;border-radius:13px;border:1px solid var(--line2);
+    background:rgba(255,255,255,.045);color:#EDEDF3;font:inherit;font-size:19px;font-weight:800;
+    cursor:pointer;transition:.16s}
+  .rscale button:active{transform:scale(.95)}
+  .rscale button.on{background:var(--yellow);border-color:var(--yellow);color:#111}
+  .rends{display:flex;justify-content:space-between;margin-top:7px;font-size:12.5px;color:#7E7E8A}
+  textarea.rnote{min-height:62px;margin-top:11px;font-size:15.5px;padding:11px 13px;
+    background:rgba(255,255,255,.04)}
+  .rrow + .rrow{border-top:1px solid var(--line);padding-top:20px}
   /* ---------- consent ---------- */
   #consent{position:fixed;inset:0;z-index:50;background:rgba(6,6,8,.94);backdrop-filter:blur(8px);
     display:flex;align-items:flex-end;justify-content:center;padding:20px}
@@ -172,8 +186,16 @@
     <h1>You're in</h1>
     <p class="lede">Keep this page open for the whole session. Each one opens when the presenter gets to it.</p>
 
-    <button class="mi" data-go="cost">
+    <button class="mi" data-go="complaints">
       <span class="n">Challenge 1</span>
+      <h2>What do your customers complain about?</h2>
+      <p>One tap for the complaint that costs you most.</p>
+      <span class="go">›</span>
+      <span class="st"><i></i><b></b></span>
+    </button>
+
+    <button class="mi" data-go="cost">
+      <span class="n">Challenge 2</span>
       <h2>How do your customers prefer to receive parcels?</h2>
       <p>One tap. Your answer lands on the screen at the front.</p>
       <span class="go">›</span>
@@ -181,24 +203,24 @@
     </button>
 
     <button class="mi" data-go="exercise">
-      <span class="n">Challenge 2</span>
+      <span class="n">Challenge 3</span>
       <h2>Deliver the Parcel</h2>
       <p>The group scenario — four questions to work through together.</p>
       <span class="go">›</span>
       <span class="st"><i></i><b></b></span>
     </button>
 
-    <button class="mi" data-go="complaints">
-      <span class="n">Challenge 3</span>
-      <h2>What do your customers complain about?</h2>
-      <p>One tap for the complaint that costs you most.</p>
+    <button class="mi" data-go="rating">
+      <span class="n">Rate the session</span>
+      <h2>Three quick questions</h2>
+      <p>Score each one out of 5 — about twenty seconds. Add a comment if you want to.</p>
       <span class="go">›</span>
       <span class="st"><i></i><b></b></span>
     </button>
 
     <button class="mi fb" data-go="qa">
       <span class="n">Feedback session</span>
-      <h2>Questions &amp; reflections</h2>
+      <h2>Questions, reflections &amp; feedback</h2>
       <p>Anything you want covered before the end. Add as many as you like.</p>
       <span class="go">›</span>
       <span class="st"><i></i><b></b></span>
@@ -243,9 +265,18 @@
       <p class="note">Changed your mind? Tap a different one — it replaces your vote, it doesn't add a second.</p>
     </section>
 
+    <!-- RATING — three scores out of five -->
+    <section class="card hide" data-sec="rating">
+      <div id="rateRows"></div>
+      <input type="text" id="rateWho" placeholder="Your name or company (optional)" style="margin-top:12px">
+      <button class="btn" id="rateSend">Send my rating</button>
+      <div class="ok" id="ok-rating"><span class="tick">✓</span><span>Thank you — your rating is in.</span></div>
+      <p class="note">Change your mind? Send again and it replaces your first rating, it doesn't add a second.</p>
+    </section>
+
     <!-- Q&A — Feedback session -->
     <section class="card hide" data-sec="qa">
-      <textarea id="qaTxt" placeholder="Your question or comment…"></textarea>
+      <textarea id="qaTxt" placeholder="Your question, reflection or feedback…"></textarea>
       <input type="text" id="qaWho" placeholder="Your name or company (optional)" style="margin-top:12px">
       <button class="btn" id="qaSend">Put it on the board</button>
       <div class="ok" id="ok-qa"><span class="tick">✓</span><span>On the board — thank you.</span></div>
@@ -296,12 +327,24 @@ const err = m => { const e=$('#err'); e.textContent=m; e.classList.add('show'); 
 const params = new URLSearchParams(location.search);
 let ROOM = (params.get('r') || localStorage.getItem('cit_room') || '').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
 
-const SECTIONS = ['cost','exercise','complaints','qa'];
+const RATING_Q = [
+  {k:'r1', t:'After seeing what we offer, how likely are you to sign up with CourierIT?',
+         lo:'Not likely', hi:'Very likely', ph:'What would make that more likely? (optional)'},
+  {k:'r2', t:'How likely are you to recommend us to a friend or business partner?',
+         lo:'Not likely', hi:'Very likely', ph:'Who would you recommend us to, and why? (optional)'},
+  {k:'r3', t:'How much value did this session add to your business?',
+         lo:'Very little', hi:'A great deal', ph:'What was most useful, or what was missing? (optional)'}
+];
+const RATE_KEY = () => 'cit_rate_' + ROOM;
+let RATE = {};
+
+const SECTIONS = ['cost','exercise','complaints','rating','qa'];
 const HEADINGS = {
-  cost:       ['Challenge 1', 'How do your township customers prefer to receive parcels?', 'Pick one. It goes straight onto the screen at the front.'],
-  exercise:   ['Challenge 2', 'Deliver the Parcel', 'One order. One school name. One cellphone number. No address. Work it through in your group, then send your answers up.'],
-  complaints: ['Challenge 3', 'What do your customers complain about?', 'Pick the one that costs you most. It goes straight onto the screen.'],
-  qa:         ['Feedback session', 'Ask a question', 'It goes onto the board at the front. Add your name only if you want to.']
+  cost:       ['Challenge 2', 'How do your township customers prefer to receive parcels?', 'Pick one. It goes straight onto the screen at the front.'],
+  exercise:   ['Challenge 3', 'Deliver the Parcel', 'One order. One school name. One cellphone number. No address. Work it through in your group, then send your answers up.'],
+  complaints: ['Challenge 1', 'What do your customers complain about?', 'Pick the one that costs you most. It goes straight onto the screen.'],
+  rating:     ['Rate the session', 'Three quick questions', 'Score each one out of five. It is anonymous unless you add your name.'],
+  qa:         ['Feedback session', 'Questions, reflections &amp; feedback', 'Anything you want covered, anything you thought of, anything you would change. It goes onto the board at the front — add your name only if you want to.']
 };
 
 let db, dbref, push, set_, onValue, get_;
@@ -351,6 +394,7 @@ function answered(sec){
   if(sec==='cost')       return !!localStorage.getItem('cit_voted_'+ROOM+'_challenge');
   if(sec==='complaints') return !!localStorage.getItem('cit_voted_'+ROOM+'_channel');
   if(sec==='exercise')   return ['q1','q2','q3','q4'].some(q=>localStorage.getItem(`cit_ex_${ROOM}_${q}`));
+  if(sec==='rating')     return !!localStorage.getItem('cit_rate_'+ROOM);
   if(sec==='qa')         return !!localStorage.getItem('cit_qa_'+ROOM);
   return false;
 }
@@ -400,7 +444,7 @@ function watchGate(){
    between sessions and reuses the same code — so before trusting that memory, check the answers
    are still up there. If they've been cleared, this is a new session: forget and start clean. */
 const LS_KEYS = () => [
-  'cit_voted_'+ROOM+'_challenge', 'cit_voted_'+ROOM+'_channel', 'cit_qa_'+ROOM,
+  'cit_voted_'+ROOM+'_challenge', 'cit_voted_'+ROOM+'_channel', 'cit_qa_'+ROOM, 'cit_rate_'+ROOM,
   ...['q1','q2','q3','q4'].map(q=>`cit_ex_${ROOM}_${q}`)
 ];
 function forgetSession(){ LS_KEYS().forEach(k=>{ try{ localStorage.removeItem(k); }catch(e){} }); }
@@ -421,6 +465,8 @@ async function syncTicks(){
     ['q1','q2','q3','q4'].forEach(q=>
       drop(`cit_ex_${ROOM}_${q}`, stillThere(d.exercise && d.exercise[q], localStorage.getItem(`cit_ex_${ROOM}_${q}`))));
     drop('cit_qa_'+ROOM, stillThere(d.qa, localStorage.getItem('cit_qa_'+ROOM)));
+    (()=>{ let s=null; try{ s=JSON.parse(localStorage.getItem('cit_rate_'+ROOM)||'null'); }catch(e){}
+      if(s && !stillThere(d.rating, s.key)){ localStorage.removeItem('cit_rate_'+ROOM); RATE={}; } })();
   }catch(e){ /* offline or read blocked — leave the memory alone rather than wiping it */ }
 }
 
@@ -452,6 +498,7 @@ function showApp(){
   $('#join').classList.add('hide');
   $('#app').classList.remove('hide');
   buildPolls();
+  buildRating();
   watchGate();
   /* a deep link (?s=… from an older QR, or a #hash) still opens straight onto that one */
   const deep = ((params.get('s')||'').toLowerCase()) || (location.hash||'').replace('#','');
@@ -487,6 +534,63 @@ function buildPolls(){
   });
 }
 
+
+function buildRating(){
+  const wrap=$('#rateRows'); if(!wrap) return;
+  wrap.innerHTML = RATING_Q.map(q=>
+    `<div class="rrow" data-rq="${q.k}">
+       <div class="rq">${q.t}</div>
+       <div class="rscale">${[1,2,3,4,5].map(n=>
+         `<button type="button" data-rq="${q.k}" data-n="${n}">${n}</button>`).join('')}</div>
+       <div class="rends"><span>1 · ${q.lo}</span><span>5 · ${q.hi}</span></div>
+       <textarea class="rnote" id="note-${q.k}" data-rn="${q.k}"
+         placeholder="${q.ph}"></textarea>
+     </div>`).join('');
+  wrap.querySelectorAll('.rscale button').forEach(b=>{
+    b.onclick = () => {
+      const k=b.dataset.rq;
+      RATE[k]=+b.dataset.n;
+      wrap.querySelectorAll(`.rscale button[data-rq="${k}"]`).forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+    };
+  });
+  /* if they already rated in this session, show it back to them */
+  try{
+    const prev=JSON.parse(localStorage.getItem(RATE_KEY())||'null');
+    if(prev && prev.v){ RATE=prev.v;
+      Object.keys(RATE).forEach(k=>{
+        const b=wrap.querySelector(`.rscale button[data-rq="${k}"][data-n="${RATE[k]}"]`);
+        if(b) b.classList.add('on');
+      });
+      if(prev.n) Object.keys(prev.n).forEach(k=>{
+        const t=wrap.querySelector(`.rnote[data-rn="${k}"]`); if(t) t.value=prev.n[k]||'';
+      });
+      $('#ok-rating').classList.add('show');
+    }
+  }catch(e){}
+}
+
+async function sendRating(){
+  const missing = RATING_Q.filter(q=>!RATE[q.k]);
+  if(missing.length){ err('Give each question a score from 1 to 5 first.'); return; }
+  $('#rateSend').disabled=true;
+  try{
+    let stored=null; try{ stored=JSON.parse(localStorage.getItem(RATE_KEY())||'null'); }catch(e){}
+    const key = (stored&&stored.key) || push(dbref(db,`sessions/${ROOM}/rating`)).key;
+    const note = k => { const t=$(`.rnote[data-rn="${k}"]`); return t ? t.value.trim().slice(0,600) : ''; };
+    const notes = { r1:note('r1'), r2:note('r2'), r3:note('r3') };
+    const payload = { r1:RATE.r1, r2:RATE.r2, r3:RATE.r3,
+                      n1:notes.r1, n2:notes.r2, n3:notes.r3,
+                      who:$('#rateWho').value.trim().slice(0,80), at:Date.now() };
+    await set_(dbref(db,`sessions/${ROOM}/rating/${key}`), payload);
+    localStorage.setItem(RATE_KEY(), JSON.stringify({key, v:RATE, n:notes}));  // sending again replaces it
+    $('#err').classList.remove('show');
+    $('#ok-rating').classList.add('show');
+    paintMenu();
+  }catch(e){ err('That rating did not send — try again.'); }
+  $('#rateSend').disabled=false;
+}
+
 async function sendExercise(){
   const qs=['q1','q2','q3','q4'], who=$('#exWho').value.trim().slice(0,80);
   const any = qs.some(q=>$('#'+q).value.trim());
@@ -508,7 +612,7 @@ async function sendExercise(){
 }
 
 async function sendQA(){
-  const t=$('#qaTxt').value.trim(); if(!t){ err('Type your question first.'); return; }
+  const t=$('#qaTxt').value.trim(); if(!t){ err('Type something in first.'); return; }
   $('#qaSend').disabled=true;
   try{
     const r = push(dbref(db,`sessions/${ROOM}/qa`));
@@ -532,7 +636,9 @@ $('#fresh').onclick = e => {
   forgetSession();
   $$('.opt').forEach(o=>o.classList.remove('on'));
   $$('.ok').forEach(o=>o.classList.remove('show'));
-  ['q1','q2','q3','q4','qaTxt','qaWho','exWho'].forEach(id=>{ const el=$('#'+id); if(el) el.value=''; });
+  RATE={}; $$('.rscale button').forEach(x=>x.classList.remove('on'));
+  $$('.rnote').forEach(t=>t.value='');
+  ['q1','q2','q3','q4','qaTxt','qaWho','exWho','rateWho'].forEach(id=>{ const el=$('#'+id); if(el) el.value=''; });
   paintMenu();
 };
 $('#joinGo').onclick = async () => {
@@ -542,6 +648,7 @@ $('#joinGo').onclick = async () => {
 };
 $('#joinCode').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#joinGo').click(); });
 $('#exSend').onclick=sendExercise;
+$('#rateSend').onclick=sendRating;
 $('#qaSend').onclick=sendQA;
 if(ROOM.length>=3){ await syncTicks(); showApp(); }
 </script>
