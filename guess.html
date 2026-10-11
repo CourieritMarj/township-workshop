@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Prize question · CourierIT</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,600..800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#08161f;--card:#0f2633;--line:#1f3e50;--ink:#e6f0f5;--muted:#8fa9b8;--glow:#5cc4ec;--live:#2fbf71;--bad:#ef7d72;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font:17px/1.5 "IBM Plex Sans","Segoe UI",Arial,sans-serif}
+main{max-width:460px;margin:0 auto;padding:28px 20px calc(40px + env(safe-area-inset-bottom,0px))}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}
+.brand{font:800 18px "Archivo","Arial Narrow",sans-serif;font-stretch:85%}
+.brand b{color:var(--glow)}
+.live{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted)}
+.live i{width:9px;height:9px;border-radius:50%;background:var(--muted)}
+.live.on i{background:var(--live)}
+.chip{display:inline-block;font:600 12px ui-monospace,Consolas,monospace;letter-spacing:.08em;text-transform:uppercase;color:#f0b45a;background:#352611;padding:4px 10px;border-radius:4px}
+h1{font:800 34px/1.02 "Archivo","Arial Narrow",sans-serif;font-stretch:78%;margin:14px 0 10px;text-wrap:balance}
+p{margin:0}
+.muted{color:var(--muted)}
+form{display:flex;flex-direction:column;gap:12px;margin-top:24px}
+label{font-size:14px;color:var(--muted)}
+input{width:100%;font:20px "IBM Plex Sans",sans-serif;padding:14px 16px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+input:focus{outline:3px solid var(--glow);outline-offset:1px}
+button{font:700 18px "IBM Plex Sans",sans-serif;padding:15px;border-radius:12px;border:0;background:var(--glow);color:#04121a;cursor:pointer;margin-top:6px}
+button:disabled{opacity:.6}
+.done{margin-top:26px;background:var(--card);border:1px solid var(--live);border-radius:16px;padding:22px;text-align:center}
+.done b{display:block;font:800 44px "Archivo",sans-serif;font-stretch:80%;color:var(--live)}
+.link{background:none;color:var(--glow);font-size:15px;font-weight:600;padding:8px;margin-top:10px}
+.err{color:var(--bad);font-size:15px;min-height:1.2em}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <div class="top"><span class="brand">Courier <b>IT</b></span><span class="live" id="live"><i></i><span id="livetxt">Connecting…</span></span></div>
+  <span class="chip">Prize question</span>
+  <h1>How many client integrations did RTT complete in the last financial year?</h1>
+  <p class="muted">The closest guess wins, as long as it's within 5 of the real number. Your name and guess show on the screen at the front.</p>
+
+  <form id="f" autocomplete="off">
+    <div><label for="n">Your name</label><input id="n" maxlength="40" required></div>
+    <div><label for="g">Your guess</label><input id="g" type="number" inputmode="numeric" min="0" max="100000" required></div>
+    <p class="err" id="err" role="alert"></p>
+    <button id="send" type="submit">Send my guess</button>
+  </form>
+
+  <div class="done" id="done" hidden>
+    <span class="muted">Your guess is in</span>
+    <b id="mine"></b>
+    <p class="muted">Watch the screen for the answer.</p>
+    <button class="link" id="change" type="button">Change my guess</button>
+  </div>
+</main>
+<script type="module">
+const V='12.17.1';
+const CFG={apiKey:"AIzaSyCY8h2aHQ9eTTCwdtnwnj75zwotaxEQ7TQ",authDomain:"cit-ecom-presentation.firebaseapp.com",databaseURL:"https://cit-ecom-presentation-default-rtdb.europe-west1.firebasedatabase.app",projectId:"cit-ecom-presentation",storageBucket:"cit-ecom-presentation.firebasestorage.app",messagingSenderId:"449791630127",appId:"1:449791630127:web:db5a6eba8eff14545c5fda"};
+const ROOM=(new URLSearchParams(location.search).get('r')||'TECH1').replace(/[^A-Za-z0-9]/g,'').slice(0,12)||'TECH1';
+const $=s=>document.querySelector(s);
+const KEY='rtt_prize_'+ROOM;
+const store={get(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}},set(v){try{localStorage.setItem(KEY,JSON.stringify(v))}catch(e){}}};
+let D,db,unwatch=null;
+function watch(k){if(unwatch)unwatch();unwatch=D.onValue(D.ref(db,`sessions/${ROOM}/qa/prize/${k}`),s=>{if(!s.exists()){try{localStorage.removeItem(KEY)}catch(e){}$('#g').value='';$('#done').hidden=true;$('#f').hidden=false;}});}
+function showDone(g){$('#mine').textContent=Number(g).toLocaleString('en-ZA');$('#f').hidden=true;$('#done').hidden=false;}
+const prev=store.get(); if(prev){$('#n').value=prev.n;$('#g').value=prev.g;showDone(prev.g);}
+$('#change').onclick=()=>{$('#done').hidden=true;$('#f').hidden=false;$('#g').focus();};
+try{
+  const A=await import(`https://www.gstatic.com/firebasejs/${V}/firebase-app.js`);
+  D=await import(`https://www.gstatic.com/firebasejs/${V}/firebase-database.js`);
+  db=D.getDatabase(A.initializeApp(CFG));
+  if(prev&&prev.k)watch(prev.k);
+  D.onValue(D.ref(db,'.info/connected'),s=>{const on=s.val()===true;$('#live').classList.toggle('on',on);$('#livetxt').textContent=on?'Connected':'Reconnecting…';});
+}catch(e){$('#livetxt').textContent='Offline';$('#err').textContent='Could not connect. Check your data or wifi, then refresh.';}
+$('#f').addEventListener('submit',async e=>{
+  e.preventDefault();$('#err').textContent='';
+  const n=$('#n').value.trim().slice(0,40),g=parseInt($('#g').value,10);
+  if(!n){$('#err').textContent='Add your name so we know who wins.';return}
+  if(isNaN(g)||g<0||g>100000){$('#err').textContent='Enter a whole number for your guess.';return}
+  if(!db){$('#err').textContent='Not connected yet. Check your data or wifi, then refresh.';return}
+  $('#send').disabled=true;
+  try{
+    const p=store.get();
+    const r=p&&p.k?D.ref(db,`sessions/${ROOM}/qa/prize/${p.k}`):D.push(D.ref(db,`sessions/${ROOM}/qa/prize`));
+    await D.set(r,{n,g,t:Date.now()});
+    store.set({k:r.key,n,g});showDone(g);watch(r.key);
+  }catch(err){$('#err').textContent='That did not go through. Try again in a moment.';}
+  $('#send').disabled=false;
+});
+</script>
+</body>
+</html>
