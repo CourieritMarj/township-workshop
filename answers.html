@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Your answers · CourierIT</title>
+<style>
+:root{--char:#14181C;--char-2:#2B3138;--red:#D52328;--red-deep:#9E1519;--paper:#F5F6F7;--line:#D8DBDE;--ink:#14181C;--mute:#5E656C;--ok:#1E7A4A;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.45 Arial,"Helvetica Neue",Helvetica,sans-serif}
+header{background:linear-gradient(90deg,#14181C 0%,#1d2126 45%,#9E1519 100%);color:#fff;padding:calc(18px + env(safe-area-inset-top,0px)) 20px 18px;border-bottom:3px solid var(--red)}
+.brand{font:italic 900 20px "Arial Black",Arial,sans-serif;letter-spacing:.02em}
+.brand b{color:var(--red)}
+.status{float:right;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#C9CDD1;margin-top:5px}
+.status i{display:inline-block;width:8px;height:8px;border-radius:50%;background:#8A9097;margin-right:6px}
+.status.on i{background:#5fd39a}
+h1{font-size:24px;line-height:1.15;margin:14px 0 4px}
+header p{margin:0;color:#C9CDD1;font-size:15px}
+main{padding:18px 16px calc(28px + env(safe-area-inset-bottom,0px));max-width:640px;margin:0 auto}
+label{display:block;font-weight:700;margin-bottom:6px}
+.card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:12px}
+.card .n{color:var(--red);margin-right:4px}
+textarea,input{width:100%;font:16px Arial,sans-serif;padding:10px 12px;border:1px solid #C2C7CC;border-radius:6px;background:#fff;color:var(--ink)}
+textarea{min-height:64px;resize:vertical}
+textarea:focus,input:focus{outline:2px solid var(--red);outline-offset:1px}
+.hint{font-size:13px;color:var(--mute);margin-top:6px}
+button{width:100%;font:700 17px Arial,sans-serif;padding:14px;border:0;border-radius:6px;background:var(--red);color:#fff;cursor:pointer}
+button:disabled{opacity:.55}
+.msg{margin-top:12px;font-size:15px;min-height:1.2em}
+.msg.err{color:var(--red)}
+.done{display:none;text-align:center;padding:30px 10px}
+.done b{display:block;font-size:24px;color:var(--ok);margin-bottom:8px}
+.done button{margin-top:18px;background:var(--char-2)}
+</style>
+</head>
+<body>
+<header>
+  <span class="status" id="status"><i></i><span id="stxt">Connecting…</span></span>
+  <div class="brand">COURIER <b>IT</b></div>
+  <h1>What do you hear from clients?</h1>
+  <p>Answer as many as you like. Your answers show on the screen at the front.</p>
+</header>
+<main>
+  <form id="f" autocomplete="off">
+    <div class="card"><label for="name">Your name <span style="font-weight:400;color:var(--mute)">(optional)</span></label><input id="name" maxlength="40"></div>
+    <div id="qs"></div>
+    <button type="submit" id="send">Send my answers</button>
+    <p class="msg" id="msg"></p>
+  </form>
+  <div class="done" id="done"><b>Thank you!</b>Your answers are on the screen.<button type="button" id="again">Add more answers</button></div>
+</main>
+<script type="module">
+import {initializeApp} from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js';
+import {getDatabase,ref,push,onValue} from 'https://www.gstatic.com/firebasejs/12.17.1/firebase-database.js';
+const ROOM=(new URLSearchParams(location.search).get('room')||'TECH1').toUpperCase();
+const PATH=`sessions/${ROOM}/qa/discussion`;
+const QS=['What tech offering of ours is your favourite?','What tech offering makes us stand out from the competition?','What do you feel we are missing to help you in the sales environment?','What tech products or capabilities do competitors have that we are missing?','How often does AI come up in discussions with prospects and clients?'];
+const db=getDatabase(initializeApp({apiKey:"AIzaSyCY8h2aHQ9eTTCwdtnwnj75zwotaxEQ7TQ",authDomain:"cit-ecom-presentation.firebaseapp.com",databaseURL:"https://cit-ecom-presentation-default-rtdb.europe-west1.firebasedatabase.app",projectId:"cit-ecom-presentation",storageBucket:"cit-ecom-presentation.firebasestorage.app",messagingSenderId:"449791630127",appId:"1:449791630127:web:db5a6eba8eff14545c5fda"}));
+const qs=document.getElementById('qs');
+QS.forEach((q,i)=>{const c=document.createElement('div');c.className='card';const l=document.createElement('label');l.htmlFor='a'+i;const n=document.createElement('span');n.className='n';n.textContent=(i+1)+'.';l.append(n,document.createTextNode(' '+q));const t=document.createElement('textarea');t.id='a'+i;t.maxLength=200;c.append(l,t);qs.append(c)});
+const st=document.getElementById('status'),stxt=document.getElementById('stxt');
+onValue(ref(db,'.info/connected'),s=>{const on=s.val()===true;st.classList.toggle('on',on);stxt.textContent=on?'Connected':'Connecting…'});
+try{document.getElementById('name').value=localStorage.getItem('ts_name')||''}catch(e){}
+const f=document.getElementById('f'),msg=document.getElementById('msg'),btn=document.getElementById('send');
+f.addEventListener('submit',async e=>{e.preventDefault();msg.className='msg';msg.textContent='';
+  const n=document.getElementById('name').value.trim().slice(0,40);try{localStorage.setItem('ts_name',n)}catch(e){}
+  const items=QS.map((_,i)=>({q:i,a:document.getElementById('a'+i).value.trim().slice(0,200)})).filter(x=>x.a);
+  if(!items.length){msg.className='msg err';msg.textContent='Type an answer to at least one question first.';return}
+  btn.disabled=true;btn.textContent='Sending…';
+  try{await Promise.all(items.map(x=>push(ref(db,PATH),{q:x.q,a:x.a,n,t:Date.now()})));
+    QS.forEach((_,i)=>document.getElementById('a'+i).value='');f.style.display='none';document.getElementById('done').style.display='block'}
+  catch(err){msg.className='msg err';msg.textContent='Your answers didn\'t send. Check your connection and try again.'}
+  finally{btn.disabled=false;btn.textContent='Send my answers'}});
+document.getElementById('again').onclick=()=>{document.getElementById('done').style.display='none';f.style.display='block';window.scrollTo(0,0)};
+</script>
+</body>
+</html>
